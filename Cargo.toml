@@ -1,8 +1,11 @@
+[package]
+name = "perms"
+version = "0.1.4"
+edition = "2024"
+
 [lib]
 name = "perms"
 path = "src/lib.rs"
-version = "0.1.4"
-edition = "2024"
 
 [dependencies]
 jsonwebtoken = "9.3.0"
