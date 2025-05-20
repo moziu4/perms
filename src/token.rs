@@ -5,41 +5,42 @@ use std::str::FromStr;
 use std::time::{SystemTime, UNIX_EPOCH};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
+use crate::domains_id::{AuthID, UserID};
 use crate::permissions::encode_perm;
 use crate::token::auth_error::PermLibError;
 
-impl fmt::Display for PermsRole
+impl fmt::Display for Role
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
     {
         write!(f, "{}", match self
         {
-            PermsRole::SuperAdmin => "SuperAdmin",
-            PermsRole::Admin => "Admin",
-            PermsRole::Client => "Client",
-            PermsRole::Visitor => "Visitor",
+            Role::SuperAdmin => "SuperAdmin",
+            Role::Admin => "Admin",
+            Role::Client => "Client",
+            Role::Visitor => "Visitor",
         })
     }
 }
 
-impl FromStr for PermsRole
+impl FromStr for Role
 {
     type Err = ();
 
-    fn from_str(input: &str) -> Result<PermsRole, Self::Err>
+    fn from_str(input: &str) -> Result<Role, Self::Err>
     {
         match input
         {
-            "SuperAdmin" => Ok(PermsRole::SuperAdmin),
-            "Admin" => Ok(PermsRole::Admin),
-            "Client" => Ok(PermsRole::Client),
-            "Visitor" => Ok(PermsRole::Visitor),
+            "SuperAdmin" => Ok(Role::SuperAdmin),
+            "Admin" => Ok(Role::Admin),
+            "Client" => Ok(Role::Client),
+            "Visitor" => Ok(Role::Visitor),
             _ => Err(()),
         }
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash, Eq)]
-pub enum PermsRole
+pub enum Role
 {
     SuperAdmin,
     Admin,
@@ -51,17 +52,17 @@ pub struct Claims {
     sub: String,
     exp: usize,
     pub permissions: Vec<u64>,
-    role: String,
+    role: Role,
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Auth
 {
-    pub _id:         Option<String>,
-    pub user_id: String,
+    pub _id:         Option<AuthID>,
+    pub user_id: UserID,
     pub username:    String,
     pub email:       String,
     pub password:    String,
-    pub roles: String,
+    pub roles: Role,
     pub permissions: Vec<u32>,
 }
 

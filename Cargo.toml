@@ -7,3 +7,4 @@ edition = "2024"
 jsonwebtoken = "9.3.0"
 serde = { version = "1.0", features = ["derive"] }
 actix-web = "4.9.0"
+mongodb = "3.2.3"
