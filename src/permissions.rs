@@ -1,7 +1,7 @@
 use actix_web::HttpRequest;
 use crate::token::Claims;
 
-pub async fn has_permission(req: HttpRequest, permission: u32) -> bool
+pub async fn has_permission(secret: String, req: HttpRequest, permission: u32) -> bool
 {
     if let Some(auth_header) = req.headers().get("Authorization")
     {
@@ -10,7 +10,6 @@ pub async fn has_permission(req: HttpRequest, permission: u32) -> bool
             if auth_str.starts_with("Bearer ")
             {
                 let token = &auth_str[7..];
-                let secret = std::env::var("SECRET_KEY").unwrap().to_string();
                 let validation = jsonwebtoken::Validation::default();
                 if let Ok(token_data) =
                     jsonwebtoken::decode::<Claims>(&token,

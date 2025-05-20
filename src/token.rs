@@ -1,9 +1,6 @@
 pub mod auth_error;
-
-use std::{env, fmt};
-use std::str::FromStr;
-use std::time::{SystemTime, UNIX_EPOCH};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use std::{fmt, str::FromStr, env, time::{SystemTime, UNIX_EPOCH}};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use crate::domains_id::{AuthID, UserID};
 use crate::permissions::encode_perm;
@@ -74,8 +71,9 @@ pub struct Token
 
 impl Token
 {
-    pub fn new(auth: Auth) -> Result<Token, PermLibError>
+    pub fn new(secret: String, auth: Auth) -> Result<Token, PermLibError>
     {
+      
         let start = SystemTime::now();
         let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
         let exp = (since_the_epoch.as_secs() + 3600) as usize;
@@ -87,11 +85,21 @@ impl Token
             exp,
             permissions: permission,
         };
-
-        let secret = env::var("SECRET_KEY").unwrap().to_string();
+        
         let token =
             encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_ref())).map_err(|_| PermLibError::FailToCreateToken)?;
 
         Ok(Token{token})
     }
+    pub fn verify(secret: String, token: &str) -> Result<Claims, PermLibError> {
+        let validation = Validation::default();
+        
+        let token_data = decode::<Claims>(
+            token,
+            &DecodingKey::from_secret(secret.as_ref()),
+            &validation,
+        ).map_err(|_| PermLibError::InvalidToken)?;
+        Ok(token_data.claims)
+    }
+
 }

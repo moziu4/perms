@@ -5,6 +5,7 @@ pub enum PermLibError {
     FailToCreateToken,
     InvalidTokenFormat,
     InvalidPermissions,
+    InvalidToken
     // Otros errores relacionados con autenticación
 }
 
@@ -14,6 +15,7 @@ impl fmt::Display for PermLibError {
             PermLibError::FailToCreateToken => write!(f, "Failed to create token"),
             PermLibError::InvalidTokenFormat => write!(f, "Token format is invalid"),
             PermLibError::InvalidPermissions => write!(f, "Invalid permissions for the token"),
+            PermLibError::InvalidToken => write!(f, "Invalid token")
         }
     }
 }
