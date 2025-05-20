@@ -1,5 +1,6 @@
-[package]
+[lib]
 name = "perms"
+path = "src/lib.rs"
 version = "0.1.4"
 edition = "2024"
 
