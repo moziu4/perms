@@ -1,55 +1,82 @@
 pub mod auth_error;
-use std::{fmt, str::FromStr, env, time::{SystemTime, UNIX_EPOCH}};
+use std::{fmt, str::FromStr, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use crate::domains_id::{AuthID, UserID};
-use crate::permissions::encode_perm;
 use crate::token::auth_error::PermLibError;
 
-impl fmt::Display for Role
-{
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
-    {
-        write!(f, "{}", match self
-        {
-            Role::SuperAdmin => "SuperAdmin",
-            Role::Admin => "Admin",
-            Role::Client => "Client",
-            Role::Visitor => "Visitor",
-        })
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash, Eq, Copy)]
+#[repr(u32)]
+pub enum Role {
+    SuperAdmin = 1,
+    AgencyOwner = 2,
+    AgencyAdmin = 3,
+    AgencyMember = 4,
+    TenantAdmin = 5,
+    Editor = 6,
+    Client = 7,
+    Guest = 8,
+}
+
+impl Role {
+    pub fn from_id(id: u32) -> Option<Role> {
+        match id {
+            1 => Some(Role::SuperAdmin),
+            2 => Some(Role::AgencyOwner),
+            3 => Some(Role::AgencyAdmin),
+            4 => Some(Role::AgencyMember),
+            5 => Some(Role::TenantAdmin),
+            6 => Some(Role::Editor),
+            7 => Some(Role::Client),
+            8 => Some(Role::Guest),
+            _ => None,
+        }
+    }
+
+    pub fn to_id(&self) -> u32 {
+        *self as u32
     }
 }
 
-impl FromStr for Role
-{
+impl fmt::Display for Role {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Role::SuperAdmin => "SuperAdmin",
+            Role::AgencyOwner => "AgencyOwner",
+            Role::AgencyAdmin => "AgencyAdmin",
+            Role::AgencyMember => "AgencyMember",
+            Role::TenantAdmin => "TenantAdmin",
+            Role::Editor => "Editor",
+            Role::Client => "Client",
+            Role::Guest => "Guest",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl FromStr for Role {
     type Err = ();
 
-    fn from_str(input: &str) -> Result<Role, Self::Err>
-    {
-        match input
-        {
+    fn from_str(input: &str) -> Result<Role, Self::Err> {
+        match input {
             "SuperAdmin" => Ok(Role::SuperAdmin),
-            "Admin" => Ok(Role::Admin),
+            "AgencyOwner" => Ok(Role::AgencyOwner),
+            "AgencyAdmin" => Ok(Role::AgencyAdmin),
+            "AgencyMember" => Ok(Role::AgencyMember),
+            "TenantAdmin" => Ok(Role::TenantAdmin),
+            "Editor" => Ok(Role::Editor),
             "Client" => Ok(Role::Client),
-            "Visitor" => Ok(Role::Visitor),
+            "Guest" => Ok(Role::Guest),
             _ => Err(()),
         }
     }
 }
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash, Eq)]
-pub enum Role
-{
-    SuperAdmin,
-    Admin,
-    Client,
-    Visitor,
-}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    sub: String,
-    exp: usize,
-    pub permissions: Vec<u64>,
-    role: Role,
+    pub sub: String,         // UserID o Username
+    pub exp: usize,          // Expiración
+    pub permissions: Vec<u32>,
+    pub role_id: u32,        // ID numérico del rol
 }
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Auth
@@ -77,13 +104,12 @@ impl Token
         let start = SystemTime::now();
         let since_the_epoch = start.duration_since(UNIX_EPOCH).unwrap();
         let exp = (since_the_epoch.as_secs() + 3600) as usize;
-        let permission = encode_perm(auth.permissions);
 
         let claims = Claims {
             sub: auth.username,
-            role: auth.roles,
+            role_id: auth.roles.to_id(),
             exp,
-            permissions: permission,
+            permissions: auth.permissions,
         };
         
         let token =
@@ -91,15 +117,19 @@ impl Token
 
         Ok(Token{token})
     }
-    pub fn verify(secret: String, token: &str) -> Result<Claims, PermLibError> {
-        let validation = Validation::default();
-        
-        let token_data = decode::<Claims>(
-            token,
-            &DecodingKey::from_secret(secret.as_ref()),
-            &validation,
-        ).map_err(|_| PermLibError::InvalidToken)?;
-        Ok(token_data.claims)
-    }
 
+    pub fn verify(secret: String, token: &str) -> Result<Claims, PermLibError> {
+        decode_token(token, &secret)
+    }
+}
+
+pub fn decode_token(token: &str, secret: &str) -> Result<Claims, PermLibError> {
+    let validation = Validation::default();
+
+    let token_data = decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &validation,
+    ).map_err(|_| PermLibError::InvalidToken)?;
+    Ok(token_data.claims)
 }

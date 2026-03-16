@@ -18,8 +18,7 @@ pub async fn has_permission(secret: String, req: HttpRequest, permission: u32) -
                 {
                     let claims = token_data.claims;
                     
-                    let permissions_decoded = decode_perm(claims.permissions);
-                    let permissions = permissions_decoded.contains(&permission);
+                    let permissions = claims.permissions.contains(&permission);
                     return permissions;
                 }
             }
