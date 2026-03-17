@@ -8,27 +8,27 @@ use crate::token::auth_error::PermLibError;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Hash, Eq, Copy)]
 #[repr(u32)]
 pub enum Role {
-    SuperAdmin = 1,
-    AgencyOwner = 2,
-    AgencyAdmin = 3,
-    AgencyMember = 4,
-    TenantAdmin = 5,
-    Editor = 6,
-    Client = 7,
-    Guest = 8,
+    SuperAdmin = 0,
+    AgencyOwner = 1,
+    AgencyAdmin = 2,
+    AgencyMember = 3,
+    TenantAdmin = 4,
+    Editor = 5,
+    Client = 6,
+    Guest = 7,
 }
 
 impl Role {
     pub fn from_id(id: u32) -> Option<Role> {
         match id {
-            1 => Some(Role::SuperAdmin),
-            2 => Some(Role::AgencyOwner),
-            3 => Some(Role::AgencyAdmin),
-            4 => Some(Role::AgencyMember),
-            5 => Some(Role::TenantAdmin),
-            6 => Some(Role::Editor),
-            7 => Some(Role::Client),
-            8 => Some(Role::Guest),
+            0 => Some(Role::SuperAdmin),
+            1 => Some(Role::AgencyOwner),
+            2 => Some(Role::AgencyAdmin),
+            3 => Some(Role::AgencyMember),
+            4 => Some(Role::TenantAdmin),
+            5 => Some(Role::Editor),
+            6 => Some(Role::Client),
+            7 => Some(Role::Guest),
             _ => None,
         }
     }
