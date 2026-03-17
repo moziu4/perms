@@ -1,7 +1,7 @@
 use actix_web::HttpRequest;
 use crate::token::Claims;
 
-pub async fn has_permission(secret: String, req: HttpRequest, permission: u32) -> bool
+pub async fn has_permission(secret: String, req: HttpRequest, permission: &str) -> bool
 {
     if let Some(auth_header) = req.headers().get("Authorization")
     {
@@ -18,7 +18,7 @@ pub async fn has_permission(secret: String, req: HttpRequest, permission: u32) -
                 {
                     let claims = token_data.claims;
                     
-                    let permissions = claims.permissions.contains(&permission);
+                    let permissions = claims.permissions.iter().any(|p| p == permission);
                     return permissions;
                 }
             }
@@ -27,30 +27,12 @@ pub async fn has_permission(secret: String, req: HttpRequest, permission: u32) -
     false
 }
 
-pub fn encode_perm(perms: Vec<u32>)->Vec<u64>
+pub fn encode_perm(perms: Vec<String>)->Vec<String>
 {
-    let mut bitfield = vec![];
-    for perm in perms {
-        let index = (perm / 64) as usize;
-        let bit = 1u64 << (perm % 64);
-        if bitfield.len() <= index {
-            bitfield.resize(index + 1, 0);
-        }
-        bitfield[index] |= bit;
-    }
-    bitfield
+    perms
 }
 
-pub fn decode_perm(bits: Vec<u64>) -> Vec<u32>
+pub fn decode_perm(bits: Vec<String>) -> Vec<String>
 {
-    let mut result = vec![];
-    for (i, &chunk) in bits.iter().enumerate()
-    {
-        for j in 0..64 {
-            if (chunk >>j) & 1 == 1
-            {result.push (i as u32 * 64 + j as u32);
-            }
-        }
-    }
-    result
+    bits
 }
